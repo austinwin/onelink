@@ -2,6 +2,8 @@ import TTT_PLUS from './games/ttt_plus.js';
 import NOTAKTO   from './games/notakto.js';
 import DAB       from './games/dots.js';
 import PIXEL     from './games/pixel.js';
+import C4        from './games/connect4.js';
+import SOKO      from './games/sokoban.js';
 
 // ---------------- Device & alias ----------------
 function shortId(){ return Math.random().toString(36).slice(2,8); }
@@ -102,7 +104,9 @@ const GAMES = {
   ttt: TTT_PLUS,
   notakto: NOTAKTO,
   dots: DAB,
-  pixel: PIXEL
+  pixel: PIXEL,
+  c4: C4,
+  soko: SOKO
 };
 
 // ---------------- DOM refs ----------------
@@ -165,6 +169,12 @@ function summ(k, p){
   if(k==='ttt' || k==='notakto'){ return `@${p}`; }
   if(k==='dots'){ return `${p.t}${p.i}`; }
   if(k==='pixel'){ return `px${p.i}`; }
+  if(k==='c4'){ return `c${p.c}`; }
+  if(k==='soko'){
+    if(p.t==='move') return p.d;
+    if(p.t==='regen') return (p.level||'regen');
+    return '?';
+  }
   return '?';
 }
 // Local-only replay: regenerate from seed + history up to index -> draw to a temp canvas overlay
@@ -301,7 +311,7 @@ function updateModePill(){
     pillText.textContent = 'Finished';
     return;
   }
-  if(isMine){ pillText.textContent = `Playing as ${seat}`; }
+  if(isMine){ pillText.textContent = `${seat}`; }
   else { pillText.textContent = 'Spectator'; }
 }
 
