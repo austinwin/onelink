@@ -1,514 +1,161 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Pass-the-URL Turn Engine — One-Link Multiplayer (Social Meta)</title>
-<style>
-  :root { --bg:#0f1115; --fg:#e6e6e6; --muted:#9aa3b2; --accent:#7bd389; --accent2:#7db3ff; --danger:#ff6b6b; --card:#151924; }
-  html, body { height:100%; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif; }
-  .wrap { max-width:980px; margin:0 auto; padding:24px; }
-  h1 { font-size:22px; margin:0 0 8px; }
-  .muted { color:var(--muted); }
-  .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
-  select, button, input[type="text"] { background:var(--card); color:var(--fg); border:1px solid #23293a; border-radius:12px; padding:10px 12px; outline:none; }
-  button { cursor:pointer; }
-  button.primary { background:linear-gradient(180deg, #1a804a, #175c38); border:1px solid #1b8f52; }
-  button.ghost { background:transparent; border-color:#2a3146; }
-  .card { background:var(--card); border:1px solid #23293a; border-radius:16px; padding:16px; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
-  .grid { display:grid; gap:12px; grid-template-columns: 1fr; }
-  @media (min-width: 900px){ .grid { grid-template-columns: 1.2fr .8fr; } }
-  .panel-title { font-weight:600; margin:0 0 8px; }
-
-  .board { display:grid; gap:6px; margin-top:8px; }
-  .board button.cell { width:64px; height:64px; font-size:28px; font-weight:700; border-radius:12px; border:1px solid #2a3146; background:#0d1018; }
-  .board button.cell:hover { outline:2px solid #25304a; }
-
-  .c4 { display:grid; grid-template-rows: 28px repeat(6, 56px); gap:6px; padding:6px; background:#0b0f18; border-radius:16px; border:1px solid #2a3146; width:max-content; }
-  .c4 .tops { display:grid; grid-template-columns: repeat(7, 56px); gap:6px; }
-  .c4 .tops button { height:28px; border-radius:8px; font-size:12px; }
-  .c4 .row { display:grid; grid-template-columns: repeat(7, 56px); gap:6px; }
-  .disc { width:56px; height:56px; border-radius:50%; display:grid; place-items:center; border:1px solid #2a3146; background:#0d1018; font-size:20px; font-weight:800; }
-  .disc.X { background:#15361f; box-shadow: inset 0 0 0 2px #1b8f52; color:#9af5b8; }
-  .disc.O { background:#12243d; box-shadow: inset 0 0 0 2px #245aa7; color:#9cc5ff; }
-
-  .linkbox { display:flex; gap:8px; align-items:center; }
-  .linkbox input { flex:1; min-width:260px; }
-  .status { padding:10px 12px; border-radius:12px; background:#0d1018; border:1px solid #2a3146; }
-  .pill { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background:#101625; border:1px solid #2a3146; }
-  .tag { font-size:12px; color:var(--muted); }
-  .small { font-size:12px; }
-  .warn { color:var(--danger); }
-  .ok { color:var(--accent); }
-  a { color: var(--accent2); text-decoration: none; }
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Pass-the-URL Turn Engine — One-Link Multiplayer</title>
+  <style>
+    :root { --bg:#0f1115; --fg:#e6e6e6; --muted:#9aa3b2; --accent:#7bd389; --accent2:#7db3ff; --danger:#ff6b6b; --card:#151924; }
+    html, body { height:100%; }
+    body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, sans-serif; }
+    .wrap { width:100%; max-width:100%; margin:0 auto; padding:12px; box-sizing:border-box; }
+    h1 { font-size:20px; margin:0 0 8px; }
+    .muted { color:var(--muted); }
+    .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+    select, button, input[type="text"] { 
+      background:var(--card); color:var(--fg); border:1px solid #23293a; 
+      border-radius:12px; padding:10px 12px; outline:none; 
+      font-size:14px; width:100%; box-sizing:border-box; 
+    }
+    .row select, .row button, .row input[type="text"] { width:auto; }
+    button { cursor:pointer; min-height:44px; touch-action:manipulation; }
+    button.primary { background:linear-gradient(180deg, #1a804a, #175c38); border:1px solid #1b8f52; }
+    button.ghost { background:transparent; border-color:#2a3146; }
+    .card { background:var(--card); border:1px solid #23293a; border-radius:16px; padding:12px; box-shadow:0 6px 24px rgba(0,0,0,.25); margin-bottom:16px; }
+    .grid { display:grid; gap:12px; grid-template-columns: 1fr; }
+    .board { display:grid; gap:4px; margin:12px auto; width:100%; max-width:320px; }
+    .board button.cell { 
+      aspect-ratio:1/1; font-size:min(5vw, 24px); font-weight:700; 
+      border-radius:8px; border:1px solid #2a3146; background:#0d1018; width:100%;
+    }
+    .board button.cell:hover { outline:2px solid #25304a; }
+    .c4 { 
+      display:grid; grid-template-rows:28px repeat(6,1fr); gap:4px; 
+      padding:6px; background:#0b0f18; border-radius:12px; 
+      border:1px solid #2a3146; width:100%; max-width:320px; margin:0 auto;
+    }
+    .c4 .tops { display:grid; grid-template-columns: repeat(7, 1fr); gap:4px; }
+    .c4 .row { display:grid; grid-template-columns: repeat(7, 1fr); gap:4px; margin:0; }
+    .disc { 
+      aspect-ratio:1/1; border-radius:50%; display:grid; place-items:center; 
+      border:1px solid #2a3146; background:#0d1018; font-size:min(5vw, 20px); font-weight:800; 
+    }
+    .disc.X { background:#15361f; box-shadow: inset 0 0 0 2px #1b8f52; color:#9af5b8; }
+    .disc.O { background:#12243d; box-shadow: inset 0 0 0 2px #245aa7; color:#9cc5ff; }
+    .pill { 
+      display:inline-flex; align-items:center; justify-content:center; gap:6px; 
+      padding:4px 8px; border-radius:999px; background:#101625; border:1px solid #2a3146;
+      min-height:32px; margin:2px; flex:1; min-width:0; white-space:nowrap;
+    }
+    .tag { font-size:12px; color:var(--muted); }
+    .small { font-size:12px; }
+    .status { padding:10px 12px; border-radius:12px; background:#0d1018; border:1px solid #2a3146; margin-bottom:12px; }
+    .linkbox { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .linkbox input { flex:1; min-width:0; }
+    .linkbox button, .linkbox a { width:auto; white-space:nowrap; }
+    a { color:var(--accent2); text-decoration:none; padding:10px 12px; display:inline-block; }
+    .ribbon { 
+      display:flex; gap:8px; overflow-x:auto; padding:8px; 
+      background:#0b0f18; border:1px solid #23293a; border-radius:12px; 
+      margin-bottom:12px; -webkit-overflow-scrolling:touch; 
+    }
+    .chip { 
+      padding:6px 8px; border-radius:999px; border:1px solid #2a3146; 
+      background:#0d1018; font-size:12px; white-space:nowrap; 
+      min-height:32px; display:flex; align-items:center;
+    }
+    .chip.active { outline:2px solid #245aa7; }
+    .pills-row { 
+      display:flex; flex-wrap:wrap; gap:4px; margin-bottom:12px; 
+      justify-content:center;
+    }
+    .controls-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .controls-row > * { flex:1; min-width:120px; }
+    .controls-row button { width:100%; }
+    
+    /* Media queries - Mobile first approach */
+    @media (min-width: 480px) {
+      .wrap { padding:16px; }
+      .board button.cell { font-size:24px; }
+    }
+    @media (min-width: 768px) {
+      .wrap { padding:20px; max-width:90%; }
+      h1 { font-size:22px; }
+      .board { gap:6px; }
+      .row { gap:12px; }
+      .linkbox { flex-wrap:nowrap; }
+    }
+    @media (min-width: 980px){ 
+      .wrap { padding:24px; max-width:980px; }
+      .grid { grid-template-columns: 1.2fr .8fr; } 
+      .board { max-width:360px; }
+    }
+  </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Pass-the-URL Turn Engine <span class="muted">(prototype + social meta)</span></h1>
-  <div class="muted" style="margin-bottom:16px;">No server. State + metadata live in the link. Share to advance the game <i>and</i> propagate views/sharers.</div>
+  <h1>Pass-the-URL Turn Engine <span class="muted">(modular)</span></h1>
+  <div class="muted" style="margin-bottom:16px;">Popularity flips rules. At 10 views: a cell is forbidden / palette shrinks. At 25: forced corners / canvas decay. At 50: <b>Turn Budget</b> = 2 moves per turn.</div>
 
   <div class="grid">
-    <!-- Left: Game viewport -->
     <div class="card">
-      <div class="row" style="justify-content:space-between;">
-        <div class="row">
-          <label for="gameSel" class="tag">Game</label>
+      <div class="controls-row">
+        <div>
+          <label class="tag" for="gameSel">Game</label>
           <select id="gameSel"></select>
-          <button id="newBtn" class="primary">New Game</button>
-          <button id="swapBtn" class="ghost" title="Swap who starts">Swap Start</button>
         </div>
-        <div class="row">
-          <div class="pill"><span class="tag">Turn</span> <strong id="turnWho">—</strong></div>
-          <div class="pill" id="modePill"><span class="tag">Mode</span> <strong>—</strong></div>
-        </div>
+        <button id="newBtn" class="primary">New Game</button>
+        <button id="swapBtn" class="ghost" title="Swap who starts">Swap Start</button>
       </div>
 
-      <div id="viewport" style="margin-top:12px;"></div>
+      <div class="pills-row">
+        <div class="pill"><span class="tag">Turn</span> <strong id="turnWho">—</strong></div>
+        <div class="pill" id="modePill"><span class="tag">Mode</span> <strong>—</strong></div>
+        <div class="pill"><span class="tag">Budget</span> <strong id="budgetLeft">—</strong></div>
+      </div>
 
-      <div style="margin-top:12px; display:grid; gap:8px;">
+      <div id="viewport"></div>
+
+      <div style="margin-top:12px;">
         <div class="status" id="status">Ready.</div>
-        <div class="row small">
+        <div class="pills-row">
           <div class="pill"><span class="tag">Views</span> <strong id="viewsCount">0</strong></div>
           <div class="pill"><span class="tag">Sharers</span> <strong id="sharersCount">0</strong></div>
           <div class="pill"><span class="tag">Friends played</span> <strong id="friendsCount">0</strong></div>
         </div>
+
+        <div class="ribbon" id="historyRibbon" title="History (last 24 moves)"></div>
+
         <div class="linkbox">
-          <input id="shareLink" type="text" readonly />
-          <button id="copyBtn">Copy Link</button>
+          <input id="shareLink" type="text" readonly/>
+          <button id="copyBtn">Copy</button>
           <a id="openLink" target="_blank" rel="noopener">Open</a>
-          <button id="reshareBtn" class="ghost" title="Flush your session opens into the link">Reshare w/ meta</button>
         </div>
-        <div class="small muted">Send this link to the other player. They open it (views++ on share), take a move (or press Reshare), and send the new link back.</div>
+        <div class="controls-row">
+          <button id="reshareBtn" class="ghost" title="Flush session views into URL">Reshare w/ meta</button>
+        </div>
+        <div class="small muted">This link carries state, metadata, and a compact move history (bounded) — no servers.</div>
       </div>
     </div>
 
-    <!-- Right: Social / identity -->
     <div class="card">
       <h3 class="panel-title">Players & Spectators</h3>
-      <div class="row">
-        <input id="aliasInput" type="text" placeholder="Your alias (optional)" style="min-width:180px;">
+      <div class="controls-row">
+        <input id="aliasInput" type="text" placeholder="Your alias (optional)">
         <button id="saveAliasBtn" class="ghost">Save Alias</button>
       </div>
-      <div class="row" style="margin-top:8px;">
+      <div class="controls-row">
         <button id="claimX" class="ghost">Claim X</button>
         <button id="claimO" class="ghost">Claim O</button>
         <button id="releaseSeat" class="ghost">Release Seat</button>
       </div>
       <div class="small muted" style="margin-top:8px;">
-        You’re a spectator by default. Claim X or O to take a seat. Only the current seat owner can move on their turn; everyone else sees spectator mode.
+        Spectator by default. Only the seat owner for the current turn can act. History ribbon shows last 24 moves; replays are local-only (no URL inflation).
       </div>
-
-      <h3 class="panel-title" style="margin-top:16px;">How this works</h3>
-      <ol class="small">
-        <li>Pick a game and click <b>New Game</b>.</li>
-        <li>Claim a seat and make a move (if it’s your turn).</li>
-        <li>Copy/share the generated link.</li>
-        <li>Each share flushes your <i>session views</i> into the URL and adds you to <i>sharers</i>.</li>
-      </ol>
-      <p class="small"><b>Caveats:</b> All numbers are “URL-propagated,” not global truth. No anti-cheat. Keep URLs short.</p>
     </div>
   </div>
 </div>
 
-<script>
-// ---------- Utils: device identity & storage ----------
-function shortId(){ return Math.random().toString(36).slice(2,8); }
-function getDeviceId(){
-  let id = localStorage.getItem('olu_device');
-  if(!id){ id = shortId(); localStorage.setItem('olu_device', id); }
-  return id;
-}
-function getSavedAlias(){ return localStorage.getItem('olu_alias') || ''; }
-function saveAlias(val){ localStorage.setItem('olu_alias', val||''); }
-
-const DEVICE_ID = getDeviceId();
-
-// ---------- Core URL codec (Base64-URL over JSON) ----------
-function encodeState(obj){
-  const json = JSON.stringify(obj);
-  const b64 = btoa(unescape(encodeURIComponent(json)));
-  return b64.replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
-}
-function decodeState(str){
-  const b64 = str.replaceAll('-','+').replaceAll('_','/');
-  const pad = '='.repeat((4 - (b64.length % 4)) % 4);
-  const json = decodeURIComponent(escape(atob(b64 + pad)));
-  return JSON.parse(json);
-}
-function makeLinkFromState(s){
-  const url = new URL(location.href);
-  url.hash = '#s=' + encodeState(s);
-  return url.toString();
-}
-function readStateFromURL(){
-  const h = location.hash || '';
-  const m = h.match(/#s=([A-Za-z0-9_-]+)/);
-  return m ? decodeState(m[1]) : null;
-}
-function shallowClone(o){ return JSON.parse(JSON.stringify(o)); }
-
-// ---------- Social/meta helpers ----------
-function newMeta(){
-  return {
-    gameId: shortId(),
-    createdAt: Date.now(),
-    views: 0,                // aggregated on share
-    sharers: [],             // device ids that have ever shared
-    lastShareAt: null
-  };
-}
-function ensureMeta(s){
-  if(!s.meta) s.meta = newMeta();
-  if(!Array.isArray(s.meta.sharers)) s.meta.sharers = [];
-  // bound sharers length to keep URL small
-  if(s.meta.sharers.length > 24) s.meta.sharers = s.meta.sharers.slice(-24);
-  return s;
-}
-function ensurePlayers(s){
-  if(!s.players) s.players = { X:{ id:null, alias:null }, O:{ id:null, alias:null } };
-  return s;
-}
-
-// Session opens that will be flushed into meta.views when sharing:
-let sessionOpens = 0;
-
-// ---------- Game registry ----------
-const GAMES = {
-  ttt: {
-    name: 'Tic-Tac-Toe',
-    initState(start='X'){
-      return ensurePlayers(ensureMeta({ 
-        board: Array(9).fill(null), start, turn:start, winner:null, moves:0,
-        meta: newMeta(), players: { X:{id:null,alias:null}, O:{id:null,alias:null} }
-      }));
-    },
-    serialize(s){ return shallowClone(s); },
-    deserialize(p){ return shallowClone(p); },
-    render(root, state, onMove, canAct){
-      root.innerHTML = '';
-      const grid = document.createElement('div');
-      grid.className = 'board';
-      grid.style.gridTemplateColumns = 'repeat(3, 64px)';
-      state.board.forEach((v, i)=>{
-        const btn = document.createElement('button');
-        btn.className = 'cell';
-        btn.textContent = v || '';
-        btn.disabled = !!v || state.winner || !canAct;
-        btn.addEventListener('click', ()=> canAct && onMove(i));
-        grid.appendChild(btn);
-      });
-      root.appendChild(grid);
-    },
-    isValidMove(state, idx){ return !state.winner && state.board[idx] == null; },
-    applyMove(state, idx){
-      const s = shallowClone(state);
-      s.board[idx] = s.turn;
-      s.moves++;
-      const L = [
-        [0,1,2],[3,4,5],[6,7,8],
-        [0,3,6],[1,4,7],[2,5,8],
-        [0,4,8],[2,4,6]
-      ];
-      for(const [a,b,c] of L){
-        if(s.board[a] && s.board[a]===s.board[b] && s.board[b]===s.board[c]){ s.winner = s.board[a]; }
-      }
-      if(!s.winner && s.moves>=9) s.winner = 'draw';
-      if(!s.winner) s.turn = (s.turn==='X'?'O':'X');
-      return s;
-    },
-    status(state){
-      if(state.winner==="draw") return 'Draw.';
-      if(state.winner) return `Winner: ${aliasOf(state, state.winner) || state.winner}`;
-      return `Turn: ${aliasOf(state, state.turn) || state.turn}`;
-    }
-  },
-
-  connect4: {
-    name: 'Connect-4',
-    initState(start='X'){
-      return ensurePlayers(ensureMeta({
-        grid: Array.from({length:6}, ()=>Array(7).fill(null)),
-        start, turn:start, winner:null, moves:0,
-        meta: newMeta(), players: { X:{id:null,alias:null}, O:{id:null,alias:null} }
-      }));
-    },
-    serialize(s){ return shallowClone(s); },
-    deserialize(p){ return shallowClone(p); },
-    render(root, state, onMove, canAct){
-      root.innerHTML = '';
-      const box = document.createElement('div');
-      box.className = 'c4';
-      const tops = document.createElement('div');
-      tops.className = 'tops';
-      for(let c=0;c<7;c++){
-        const b = document.createElement('button');
-        b.textContent = '▼';
-        b.title = 'Drop in column ' + (c+1);
-        b.disabled = !!state.winner || state.grid[0][c] !== null || !canAct;
-        b.addEventListener('click', ()=> canAct && onMove(c));
-        tops.appendChild(b);
-      }
-      box.appendChild(tops);
-      for(let r=0;r<6;r++){
-        const row = document.createElement('div');
-        row.className = 'row';
-        for(let c=0;c<7;c++){
-          const d = document.createElement('div');
-          const v = state.grid[r][c];
-          d.className = 'disc' + (v?(' '+v):'');
-          d.textContent = v? (aliasInitial(state, v) || v) : '';
-          row.appendChild(d);
-        }
-        box.appendChild(row);
-      }
-      root.appendChild(box);
-    },
-    isValidMove(state, col){ return !state.winner && state.grid[0][col] === null; },
-    applyMove(state, col){
-      const s = shallowClone(state);
-      let row = -1; for(let r=5;r>=0;r--){ if(s.grid[r][col]==null){ row=r; break; } }
-      if(row<0) return s;
-      s.grid[row][col] = s.turn; s.moves++;
-      const dirs = [[1,0],[0,1],[1,1],[1,-1]];
-      function count(r,c,dr,dc){ let n=0; let cur=s.turn; while(r>=0&&r<6&&c>=0&&c<7&&s.grid[r][c]===cur){ n++; r+=dr; c+=dc; } return n; }
-      for(const [dr,dc] of dirs){
-        const a = count(row,col, dr,dc);
-        const b = count(row,col,-dr,-dc);
-        if(a+b-1 >= 4){ s.winner = s.turn; break; }
-      }
-      if(!s.winner && s.moves>=42) s.winner = 'draw';
-      if(!s.winner) s.turn = (s.turn==='X'?'O':'X');
-      return s;
-    },
-    status(state){
-      if(state.winner==="draw") return 'Draw.';
-      if(state.winner) return `Winner: ${aliasOf(state, state.winner) || state.winner}`;
-      return `Turn: ${aliasOf(state, state.turn) || state.turn}`;
-    }
-  },
-};
-
-// ---------- Engine UI refs ----------
-const els = {
-  gameSel: document.getElementById('gameSel'),
-  newBtn: document.getElementById('newBtn'),
-  swapBtn: document.getElementById('swapBtn'),
-  viewport: document.getElementById('viewport'),
-  status: document.getElementById('status'),
-  shareLink: document.getElementById('shareLink'),
-  copyBtn: document.getElementById('copyBtn'),
-  openLink: document.getElementById('openLink'),
-  reshareBtn: document.getElementById('reshareBtn'),
-  turnWho: document.getElementById('turnWho'),
-  modePill: document.getElementById('modePill'),
-  aliasInput: document.getElementById('aliasInput'),
-  saveAliasBtn: document.getElementById('saveAliasBtn'),
-  claimX: document.getElementById('claimX'),
-  claimO: document.getElementById('claimO'),
-  releaseSeat: document.getElementById('releaseSeat'),
-  viewsCount: document.getElementById('viewsCount'),
-  sharersCount: document.getElementById('sharersCount'),
-  friendsCount: document.getElementById('friendsCount'),
-};
-
-let activeGameKey = 'ttt';
-let coreState = null; // { g, p }
-let canAct = false;
-
-// ---------- Player helpers ----------
-function aliasOf(state, mark){
-  const a = (state.players?.[mark]?.alias)||'';
-  return a || null;
-}
-function aliasInitial(state, mark){
-  const a = aliasOf(state, mark);
-  return a ? a[0].toUpperCase() : mark;
-}
-function seatOwnerId(state, mark){
-  return state.players?.[mark]?.id || null;
-}
-function mySeat(state){
-  if(seatOwnerId(state, 'X') === DEVICE_ID) return 'X';
-  if(seatOwnerId(state, 'O') === DEVICE_ID) return 'O';
-  return null;
-}
-function isMyTurn(state){
-  const seat = mySeat(state);
-  return seat && state.turn === seat && !state.winner;
-}
-
-// ---------- Social meta flows ----------
-function bumpSessionOpens(){ sessionOpens += 1; }
-function flushSessionOpensIntoMeta(){
-  if(sessionOpens > 0){
-    coreState.p.meta.views = (coreState.p.meta.views||0) + sessionOpens;
-    sessionOpens = 0;
-  }
-}
-function addSharer(){
-  const arr = coreState.p.meta.sharers || [];
-  if(!arr.includes(DEVICE_ID)){
-    arr.push(DEVICE_ID);
-    // bound length to last 24 to keep URL manageable
-    if(arr.length > 24) arr.splice(0, arr.length - 24);
-    coreState.p.meta.sharers = arr;
-  }
-  coreState.p.meta.lastShareAt = Date.now();
-}
-
-// ---------- Engine core ----------
-function listGames(){
-  els.gameSel.innerHTML = '';
-  for(const [k,v] of Object.entries(GAMES)){
-    const o = document.createElement('option');
-    o.value = k; o.textContent = v.name; els.gameSel.appendChild(o);
-  }
-  els.gameSel.value = activeGameKey;
-}
-
-function newGame(start='X'){
-  const g = GAMES[activeGameKey];
-  coreState = { g: activeGameKey, p: g.serialize(g.initState(start)) };
-  draw();
-}
-
-function setFromURL(){
-  const s = readStateFromURL();
-  if(!s){ newGame('X'); return; }
-  if(!GAMES[s.g]){ activeGameKey = 'ttt'; newGame('X'); return; }
-  activeGameKey = s.g; els.gameSel.value = activeGameKey;
-  const g = GAMES[s.g];
-  coreState = { g: s.g, p: ensurePlayers(ensureMeta(g.deserialize(s.p))) };
-  // Count this open locally; only added to meta.views when someone shares
-  bumpSessionOpens();
-  draw();
-}
-
-function onMoveGeneric(payload){
-  const g = GAMES[coreState.g];
-  // Move is only allowed if it's my turn (seat + turn match)
-  if(!isMyTurn(coreState.p)) return;
-  if(!g.isValidMove(coreState.p, payload)) return;
-
-  const next = g.applyMove(coreState.p, payload);
-  coreState.p = next;
-
-  // On sharing a move: flush opens -> views, mark sharer
-  flushSessionOpensIntoMeta();
-  addSharer();
-
-  publishLinkAndDraw();
-}
-
-function publishLinkAndDraw(){
-  const g = GAMES[coreState.g];
-  const nextStateForURL = { g: coreState.g, p: g.serialize(coreState.p) };
-  const link = makeLinkFromState(nextStateForURL);
-  els.shareLink.value = link; els.openLink.href = link;
-  draw();
-}
-
-function updateModePill(){
-  const isMine = isMyTurn(coreState.p);
-  const seat = mySeat(coreState.p);
-  const pillText = els.modePill.querySelector('strong');
-  if(coreState.p.winner){
-    pillText.textContent = 'Finished';
-    els.modePill.classList.remove('ok'); els.modePill.classList.remove('warn');
-  } else if(isMine){
-    pillText.textContent = `Playing as ${seat}`;
-    els.modePill.classList.add('ok'); els.modePill.classList.remove('warn');
-  } else {
-    pillText.textContent = 'Spectator';
-    els.modePill.classList.remove('ok'); els.modePill.classList.add('warn');
-  }
-}
-
-function draw(){
-  const g = GAMES[coreState.g];
-  // canAct = only if it's my turn and game not finished
-  canAct = isMyTurn(coreState.p);
-  els.turnWho.textContent = coreState.p.turn;
-  g.render(els.viewport, coreState.p, onMoveGeneric, canAct);
-  els.status.textContent = g.status(coreState.p);
-
-  // Counters in UI:
-  const seated = ['X','O'].filter(mark => !!seatOwnerId(coreState.p, mark)).length;
-  const sharers = (coreState.p.meta.sharers||[]).length;
-  const friendsPlayed = Math.max(0, sharers - seated);
-  els.viewsCount.textContent = String(coreState.p.meta.views||0);
-  els.sharersCount.textContent = String(sharers);
-  els.friendsCount.textContent = String(friendsPlayed);
-
-  // Prepare share link for current state (even without move)
-  const link = makeLinkFromState({ g: coreState.g, p: g.serialize(coreState.p) });
-  els.shareLink.value = link; els.openLink.href = link;
-
-  updateModePill();
-
-  // Reflect aliases in inputs
-  els.aliasInput.value = getSavedAlias();
-}
-
-// ---------- Seat management ----------
-function claimSeat(mark){
-  const alias = getSavedAlias();
-  // If seat taken by someone else, confirm override (it *will* override since no auth)
-  const current = seatOwnerId(coreState.p, mark);
-  if(current && current !== DEVICE_ID){
-    if(!confirm(`Seat ${mark} is bound to another device. Take over?`)) return;
-  }
-  coreState.p.players[mark].id = DEVICE_ID;
-  if(alias) coreState.p.players[mark].alias = alias;
-
-  // Flush and shareable (optional; we don’t auto-share)
-  draw();
-}
-function releaseMySeat(){
-  const seat = mySeat(coreState.p);
-  if(!seat) return;
-  coreState.p.players[seat].id = null;
-  draw();
-}
-
-// ---------- Events ----------
-window.addEventListener('hashchange', setFromURL);
-
-els.newBtn.addEventListener('click', ()=> newGame('X'));
-els.swapBtn.addEventListener('click', ()=> newGame(coreState?.p?.start==='X'?'O':'X'));
-els.copyBtn.addEventListener('click', async ()=>{
-  try { await navigator.clipboard.writeText(els.shareLink.value); els.copyBtn.textContent = 'Copied'; setTimeout(()=> els.copyBtn.textContent='Copy Link', 1000); } catch(e){ alert('Copy failed. Manually select and copy the link.'); }
-});
-els.gameSel.addEventListener('change', ()=>{ activeGameKey = els.gameSel.value; newGame('X'); });
-
-els.aliasInput.value = getSavedAlias();
-els.saveAliasBtn.addEventListener('click', ()=>{
-  saveAlias(els.aliasInput.value.trim());
-  // If seated, update alias in place
-  const seat = mySeat(coreState.p);
-  if(seat){ coreState.p.players[seat].alias = getSavedAlias() || null; }
-  draw();
-});
-
-els.claimX.addEventListener('click', ()=> claimSeat('X'));
-els.claimO.addEventListener('click', ()=> claimSeat('O'));
-els.releaseSeat.addEventListener('click', ()=> releaseMySeat());
-
-els.reshareBtn.addEventListener('click', ()=>{
-  // Push session opens into URL + mark as sharer, even without moving
-  flushSessionOpensIntoMeta();
-  addSharer();
-  publishLinkAndDraw();
-});
-
-// ---------- Init ----------
-function bootstrap(){
-  listGames();
-  setFromURL(); // sets coreState or creates new
-}
-bootstrap();
-</script>
+<script type="module" src="./js/core.js"></script>
 </body>
 </html>
